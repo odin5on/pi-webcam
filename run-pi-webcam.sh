@@ -10,7 +10,7 @@ SERIAL="0123456789"
 MANUF=$(hostname)
 PRODUCT="UVC Gadget"
 BOARD=$(strings /proc/device-tree/model)
-UDC=`ls /sys/class/udc` # will identify the 'first' UDC
+UDC=$(ls /sys/class/udc) # will identify the 'first' UDC
 
 # Later on, this function is used to tell the usb subsystem that we want
 # to support a particular format, framesize and frameintervals
@@ -27,10 +27,10 @@ create_frame() {
 	wdir=functions/$FUNCTION/streaming/$FORMAT/$NAME/${HEIGHT}p
 
 	mkdir -p $wdir
-	echo $WIDTH > $wdir/wWidth
-	echo $HEIGHT > $wdir/wHeight
-	echo $(( $WIDTH * $HEIGHT * 2 )) > $wdir/dwMaxVideoFrameBufferSize
-	cat <<EOF > $wdir/dwFrameInterval
+	echo $WIDTH >$wdir/wWidth
+	echo $HEIGHT >$wdir/wHeight
+	echo $(($WIDTH * $HEIGHT * 2)) >$wdir/dwMaxVideoFrameBufferSize
+	cat <<EOF >$wdir/dwFrameInterval
 $6
 EOF
 }
@@ -102,7 +102,7 @@ create_uvc() {
 	# microframe, which gives us the maximum speed for USB 2.0. Other
 	# valid values are 1024 and 2048, but these will result in a lower
 	# supportable framerate.
-	echo 2048 > functions/$FUNCTION/streaming_maxpacket
+	echo 2048 >functions/$FUNCTION/streaming_maxpacket
 
 	ln -s functions/$FUNCTION configs/c.1
 }
@@ -118,7 +118,8 @@ modprobe libcomposite
 # device we want to pretend to be.
 
 if
-[ ! -d $GADGET/g1 ]; then
+	[ ! -d $GADGET/g1 ]
+then
 	echo "Detecting platform:"
 	echo "  board : $BOARD"
 	echo "  udc   : $UDC"
@@ -130,23 +131,24 @@ if
 
 	cd $GADGET/g1
 	if
-[ $? -ne 0 ]; then
+		[ $? -ne 0 ]
+	then
 		echo "Error creating usb gadget in configfs"
-		exit 1;
+		exit 1
 	else
 		echo "OK"
 	fi
 
 	echo "Setting Vendor and Product ID's"
-	echo $VID > idVendor
-	echo $PID > idProduct
+	echo $VID >idVendor
+	echo $PID >idProduct
 	echo "OK"
 
 	echo "Setting English strings"
 	mkdir -p strings/0x409
-	echo $SERIAL > strings/0x409/serialnumber
-	echo $MANUF > strings/0x409/manufacturer
-	echo $PRODUCT > strings/0x409/product
+	echo $SERIAL >strings/0x409/serialnumber
+	echo $MANUF >strings/0x409/manufacturer
+	echo $PRODUCT >strings/0x409/product
 	echo "OK"
 
 	echo "Creating Config"
@@ -160,7 +162,7 @@ if
 	echo "OK"
 
 	echo "Binding USB Device Controller"
-	echo $UDC > UDC
+	echo $UDC >UDC
 	echo "OK"
 fi
 

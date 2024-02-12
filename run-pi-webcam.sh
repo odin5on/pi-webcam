@@ -170,4 +170,6 @@ fi
 # the first available camera on the system. All cameras will be listed,
 # you can re-run with -c n to select camera n or -c ID to select via
 # the camera ID.
+v4l2-ctl --set-ctrl=rotate=180
+
 uvc-gadget -c 0 uvc.0

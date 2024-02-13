@@ -1,0 +1,3 @@
+[submodule "uvc-gadget"]
+	path = uvc-gadget
+	url = https://gitlab.freedesktop.org/camera/uvc-gadget/

@@ -1,5 +1,6 @@
 import numpy as np
-from picamera2 import Picamera2, H264Encoder
+from picamera2 import Picamera2
+from picamera2.encoders import H264Encoder
 import time
 
 class RotatingEncoder(H264Encoder):

@@ -3,11 +3,12 @@
 
 
 import cv2 
-
+print("imported cv2")
 
 # Create an object to read 
 # from camera 
 video = cv2.VideoCapture(0) 
+print("ran VideoCapture")
 
 # We need to check if camera 
 # is opened previously or not 

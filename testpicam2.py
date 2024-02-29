@@ -6,7 +6,6 @@ import libcamera
 
 picam2 = Picamera2()
 video_config = picam2.create_video_configuration()
-video_config["transform"] = libcamera.Transform(hflip=1, vflip=1)
 picam2.configure(video_config)
 
 print(picam2.camera_controls)

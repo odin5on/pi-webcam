@@ -3,6 +3,7 @@ import cv2
 print('import successful')
 # Open the virtual camera device
 virtual_camera = cv2.VideoCapture('/dev/video3')  # Adjust the path as per your system
+print("Virtual camera opened successfully")
 
 # Check if the virtual camera is opened successfully
 if not virtual_camera.isOpened():

@@ -11,6 +11,7 @@ if not virtual_camera.isOpened():
 
 # Open the physical camera or any other video source
 physical_camera = cv2.VideoCapture(0)  # Adjust index if you have multiple cameras
+print("Physical camera opened successfully")
 
 while True:
     ret, frame = physical_camera.read()  # Read frame from physical camera
@@ -19,11 +20,13 @@ while True:
         break
 
     # Perform image processing operations on the frame
-    cv2.blur(frame)
+    cv2.blur(frame, (5, 5))
+    print("Frame processed")
     # For example, you can use OpenCV functions like cv2.cvtColor(), cv2.blur(), etc.
 
     # Write the processed frame to the virtual camera
     virtual_camera.write(frame)
+    print("Frame written to virtual camera")
 
     # Display the processed frame (optional)
     #cv2.imshow('Processed Frame', frame)

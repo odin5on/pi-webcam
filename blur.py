@@ -1,4 +1,6 @@
+print('importing cv2')
 import cv2
+print('import successful')
 
 cap = cv2.VideoCapture(0)  # Open video capture object
 
@@ -8,9 +10,10 @@ while True:
         break
 
     # Rotate the frame by 180 degrees
-    frame = cv2.rotate(frame, cv2.ROTATE_180)
+    frame = cv2.blur(frame)
 
-    cv2.imshow('Rotated Video', frame)  # Display the result
+    #cv2.imshow('Rotated Video', frame)  # Display the result
+    cap.write(frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit loop on 'q' key press
         break

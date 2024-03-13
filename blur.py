@@ -10,7 +10,7 @@ while True:
         break
 
     # Rotate the frame by 180 degrees
-    frame = cv2.blur(frame)
+    frame = cv2.blur(frame, (5,5))
 
     #cv2.imshow('Rotated Video', frame)  # Display the result
     cap.write(frame)

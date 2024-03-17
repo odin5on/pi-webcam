@@ -7,12 +7,12 @@ physical_camera = cv2.VideoCapture(0)
 print("Physical camera opened successfully")
 
 # Open the virtual camera device
-virtual_camera = cv2.VideoWriter('appsrc ! videoconvert ! video/x-raw,format=YUY2 ! v4l2sink device=/dev/video2')
+virtual_camera = cv2.VideoWriter("v4l2src device=/dev/video1 ! video/x-raw, width=1920, height=1080, framerate=30/1 ! videoconvert ! video/x-raw, format=BGR ! appsink", 0, 30, (1920,1080),True)
 print("Virtual camera opened successfully")
 
-if not virtual_camera.isOpened():
-    print("Error: Could not open virtual camera")
-    exit()
+#if not virtual_camera.isOpened():
+#    print("Error: Could not open virtual camera")
+#    exit()
 
 
 while True:

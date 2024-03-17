@@ -7,7 +7,7 @@ physical_camera = cv2.VideoCapture(0)
 print("Physical camera opened successfully")
 
 # Open the virtual camera device
-virtual_camera = cv2.VideoWriter('/dev/video3')
+virtual_camera = cv2.VideoWriter('appsrc ! videoconvert ! video/x-raw,format=YUY2 ! v4l2sink device=/dev/video2')
 print("Virtual camera opened successfully")
 
 if not virtual_camera.isOpened():

@@ -3,11 +3,11 @@ import cv2
 print('import successful')
 
 # Open the physical camera
-physical_camera = cv2.VideoCapture(0)
+physical_camera = cv2.VideoCapture("gst-launch-1.0 libcamerasrc ! capsfilter caps=video/raw,width=1920,height=1080 ! v4l2convert")
 print("Physical camera opened successfully")
 
 # Open the virtual camera device
-virtual_camera = cv2.VideoWriter("v4l2src device=/dev/video1 ! video/x-raw, width=1920, height=1080, framerate=30/1 ! videoconvert ! video/x-raw, format=BGR ! appsink", 0, 30, (1920,1080),True)
+virtual_camera = cv2.VideoWriter("appsrc ! videoconvert ! shmsink socket-path=/dev/video1 sync=true wait-for-connection=false shm-size=10000000", 0, 30, (1920,1080),True)
 print("Virtual camera opened successfully")
 
 #if not virtual_camera.isOpened():

@@ -1,13 +1,12 @@
-print("importing cv2")
 import cv2
-print('import successful')
+print("OpenCV version: "+cv2.__version__)
 
 # Open the physical camera
-physical_camera = cv2.VideoCapture("gst-launch-1.0 libcamerasrc ! capsfilter caps=video/raw,width=1920,height=1080 ! v4l2convert")
+physical_camera = cv2.VideoCapture("libcamerasrc ! v4l2convert ! appsink")
 print("Physical camera opened successfully")
 
 # Open the virtual camera device
-virtual_camera = cv2.VideoWriter("appsrc ! videoconvert ! shmsink socket-path=/dev/video1 sync=true wait-for-connection=false shm-size=10000000", 0, 30, (1920,1080),True)
+virtual_camera = cv2.VideoWriter("appsrc ! videoconvert ! v4l2sink device=/dev/video3", -1, 30, (1920,1080),True)
 print("Virtual camera opened successfully")
 
 #if not virtual_camera.isOpened():

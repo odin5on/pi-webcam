@@ -1883,6 +1883,17 @@ class v4l2_dbg_chip_ident(ctypes.Structure):
 
     _pack_ = True
 
+class v4l2_exportbuffer(ctypes.Structure):
+
+    _fields_ = [
+        ('type', ctypes.c_uint32),
+        ('index', ctypes.c_uint32),
+        ('plane', ctypes.c_uint32),
+        ('flags', ctypes.c_uint32),
+        ('fd', ctypes.c_int32),
+        ('reserved', ctypes.c_uint32*11),
+    ]
+
 
 #
 # ioctl codes for video devices
@@ -1899,6 +1910,7 @@ VIDIOC_G_FBUF = _IOR('V', 10, v4l2_framebuffer)
 VIDIOC_S_FBUF = _IOW('V', 11, v4l2_framebuffer)
 VIDIOC_OVERLAY = _IOW('V', 14, ctypes.c_int)
 VIDIOC_QBUF = _IOWR('V', 15, v4l2_buffer)
+VIDIOC_EXPBUF = _IOWR('V', 16, v4l2_exportbuffer)
 VIDIOC_DQBUF = _IOWR('V', 17, v4l2_buffer)
 VIDIOC_STREAMON = _IOW('V', 18, ctypes.c_int)
 VIDIOC_STREAMOFF = _IOW('V', 19, ctypes.c_int)

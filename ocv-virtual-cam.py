@@ -4,7 +4,7 @@ import cv2
 import fcntl
 from v4l2 import (
     v4l2_format, VIDIOC_G_FMT, V4L2_BUF_TYPE_VIDEO_OUTPUT, V4L2_PIX_FMT_RGB24,
-    V4L2_FIELD_NONE, VIDIOC_S_FMT
+    V4L2_FIELD_NONE, VIDIOC_S_FMT, VIDIOC_EXPBUF
 )
 print("OpenCV version: "+cv2.__version__)
 
@@ -32,13 +32,14 @@ def main():
 
     vid_format = v4l2_format()
     vid_format.type = V4L2_BUF_TYPE_VIDEO_OUTPUT
+    vid_format.fmt.pix.width = VID_WIDTH
+    vid_format.fmt.pix.height = VID_HEIGHT
+
     if fcntl.ioctl(output, VIDIOC_G_FMT, vid_format) < 0:
         print("ERROR: unable to get video format!")
         return -1
 
     framesize = VID_WIDTH * VID_HEIGHT * 3
-    vid_format.fmt.pix.width = VID_WIDTH
-    vid_format.fmt.pix.height = VID_HEIGHT
 
     vid_format.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24
     vid_format.fmt.pix.sizeimage = framesize
@@ -46,6 +47,10 @@ def main():
 
     if fcntl.ioctl(output, VIDIOC_S_FMT, vid_format) < 0:
         print("ERROR: unable to set video format!")
+        return -1
+
+    if(fcntl.ioctl(output, VIDIOC_EXPBUF, vid_format) < 0):
+        print("ERROR: unable to export buffer!")
         return -1
 
     while True:

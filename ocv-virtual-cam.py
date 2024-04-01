@@ -12,7 +12,7 @@ VID_WIDTH = 640
 VID_HEIGHT = 480
 
 VIDEO_IN = "/dev/video0"
-VIDEO_OUT = "/dev/video2"
+VIDEO_OUT = "/dev/video3"
 
 def main():
     cam = cv2.VideoCapture("libcamerasrc ! appsink")
@@ -49,9 +49,9 @@ def main():
         print("ERROR: unable to set video format!")
         return -1
 
-    if(fcntl.ioctl(output, VIDIOC_EXPBUF, vid_format) < 0):
-        print("ERROR: unable to export buffer!")
-        return -1
+    #if(fcntl.ioctl(output, VIDIOC_EXPBUF, vid_format) < 0):
+    #    print("ERROR: unable to export buffer!")
+    #    return -1
 
     while True:
         ret, frame = cam.read()  # Read frame from physical camera

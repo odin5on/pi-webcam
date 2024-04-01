@@ -3,8 +3,8 @@ import sys
 import cv2
 import fcntl
 from v4l2 import (
-    v4l2_format, VIDIOC_G_FMT, V4L2_BUF_TYPE_VIDEO_OUTPUT, V4L2_PIX_FMT_RGB24,
-    V4L2_FIELD_NONE, VIDIOC_S_FMT, VIDIOC_EXPBUF
+    v4l2_format, v4l2_capability, VIDIOC_G_FMT, V4L2_BUF_TYPE_VIDEO_OUTPUT, V4L2_PIX_FMT_RGB24,
+    V4L2_FIELD_NONE, VIDIOC_S_FMT, VIDIOC_EXPBUF, VIDIOC_QUERYCAP
 )
 print("OpenCV version: "+cv2.__version__)
 
@@ -29,6 +29,11 @@ def main():
         print("ERROR: could not open output device!")
         print(str(ex))
         return -1
+    
+    print(output)
+    capability = v4l2_capability()
+    print ("get capability result", (fcntl.ioctl(output, VIDIOC_QUERYCAP, capability)))
+    print ("capabilities", hex(capability.capabilities))
 
     vid_format = v4l2_format()
     vid_format.type = V4L2_BUF_TYPE_VIDEO_OUTPUT

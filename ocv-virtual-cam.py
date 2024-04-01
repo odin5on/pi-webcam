@@ -32,14 +32,14 @@ def main():
 
     vid_format = v4l2_format()
     vid_format.type = V4L2_BUF_TYPE_VIDEO_OUTPUT
-    vid_format.fmt.pix.width = VID_WIDTH
-    vid_format.fmt.pix.height = VID_HEIGHT
 
     if fcntl.ioctl(output, VIDIOC_G_FMT, vid_format) < 0:
         print("ERROR: unable to get video format!")
         return -1
 
     framesize = VID_WIDTH * VID_HEIGHT * 3
+    vid_format.fmt.pix.width = VID_WIDTH
+    vid_format.fmt.pix.height = VID_HEIGHT
 
     vid_format.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24
     vid_format.fmt.pix.sizeimage = framesize

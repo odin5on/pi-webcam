@@ -68,7 +68,7 @@ def main():
         result = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         result = cv2.cvtColor(result, cv2.COLOR_GRAY2RGB)
 
-        written = os.write(output, result.data)
+        written = os.write(output, result.data.tobytes())
         if written < 0:
             print("ERROR: could not write to output device!")
             os.close(output)

@@ -1,12 +1,14 @@
+import fcntl
 import cv2
 print("OpenCV version: "+cv2.__version__)
+print(cv2.getBuildInformation())
 
 # Open the physical camera
-physical_camera = cv2.VideoCapture("libcamerasrc ! v4l2convert ! appsink")
+physical_camera = cv2.VideoCapture("libcamerasrc ! capsfilter caps=video/x-raw,framerate=30/1 ! v4l2convert ! appsink")
 print("Physical camera opened successfully")
 
 # Open the virtual camera device
-virtual_camera = cv2.VideoWriter("appsrc ! videoconvert ! v4l2sink device=/dev/video3", -1, 30, (1920,1080),True)
+virtual_camera = cv2.VideoWriter("appsrc ! videoconvert ! v4l2sink device=/dev/video2", -1, 30, (1920,1080),True)
 print("Virtual camera opened successfully")
 
 #if not virtual_camera.isOpened():

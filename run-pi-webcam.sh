@@ -161,6 +161,7 @@ then
 
 	echo "OK"
 
+	pwd
 	echo "Binding USB Device Controller"
 	echo $UDC >UDC
 	echo "OK"

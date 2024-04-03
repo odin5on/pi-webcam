@@ -1,0 +1,22 @@
+I'm just summarizing how this works so I can try and understand it.
+
+
+/src/main.c
+
+Processes all of the arguments. Creates a source based on the arguments given (libcamera, v4l2device, slideshow...). This creates a video_soure struct which is passed to some other funcions later.
+
+
+/lib/v4l2-source.c
+
+struct video_source *v4l2_video_source_create(const char *devname)
+What this function does:
+	1. Takes a string (devname) which is the path to the video src
+	2. Allocates memory for a new v4l2_source which contains a video_source struct and v4l2_device 
+	   struct
+	3. Sets the ops field of the video_source to a defined video_source_ops struct
+	4. Sets the type field of the video_source to VIDEO_SOURCE_DMABUF, this presumably means the source
+	   uses DMA-BUF for memory management
+	5. It tries to open the device, if this fails it frees the source from memory and returns null
+	6. It checks the type of the v4l2_device to make sure it is V4L2_BUF_TYPE_VIDEO_CAPTURE, if not
+	   it causes an error and returns.
+	7. If everything is successful, it returns a pointer to src (the v4l2_source)

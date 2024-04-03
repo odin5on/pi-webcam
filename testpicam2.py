@@ -6,6 +6,7 @@ import libcamera
 
 picam2 = Picamera2()
 video_config = picam2.create_video_configuration()
+print(video_config)
 picam2.configure(video_config)
 
 print(picam2.camera_controls)

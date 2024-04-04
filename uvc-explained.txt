@@ -57,6 +57,8 @@ What this function does:
 	5. Sets the type field of video_source to VIDEO_SOURCE_DMABUF
 	6. Creates and starts a CameraManager object which is assigned to the libcamera_src (not sure what
 	   the CameraManager object is/does
+	   edit: the CameraManager and other related objects are from the libcamera library. Look up
+	   libcamera documentation.
 	7. Finds the camera object through a somewhat complicated way of querying the cameras based on the
 	   index you pass in (usually 0)
 	8. Configures the camera through some generateConfiguration function that I need to figure out

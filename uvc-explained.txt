@@ -128,3 +128,56 @@ uvc_stream_init_uvc
 		uvc_fill_streaming_control(passes in commit)
 events_loop // main capture loop
 cleanup functions
+
+
+Representation of some of the structures (basically objects) used
+
+
+This is what src is in main.c
+struct video_source {
+	const struct video_source_ops *ops {
+		void(*destroy)(struct video_source *src);
+		int(*set_format)(struct video_source *src, struct v4l2_pix_format *fmt);
+		int(*set_frame_rate)(struct video_source *src, unsigned int fps);
+		int(*alloc_buffers)(struct video_source *src, unsigned int nbufs);
+		int(*export_buffers)(struct video_source *src, struct video_buffer_set **buffers);
+		int(*import_buffers)(struct video_source *src, struct video_buffer_set *buffers);
+		int(*free_buffers)(struct video_source *src);
+		int(*stream_on)(struct video_source *src);
+		int(*stream_off)(struct video_source *src);
+		int(*queue_buffer)(struct video_source *src, struct video_buffer *buf);
+		void(*fill_buffer)(struct video_source *src, struct video_buffer *buf);
+	},
+	struct events *events {
+		struct list_entry events {
+			struct list_entry *prev
+			struct list_entry *next
+		}
+		volatile bool done
+		int maxfd
+		fd_set rfds {
+			__int32_t fds_bits
+		}
+		fd_set wfds;
+		fd_set efds;
+	}
+	video_source_buffer_handler_t handler {
+		void *
+		struct video_source *
+		struct video_buffer * {
+			unsigned int index;
+			unsigned int size;
+			unsigned int bytesused;
+			struct timeval timestamp;
+			bool error;
+			void *mem;
+			int dmabuf;
+		}
+	}
+	void *handler_data
+	enum video_source_type type {
+		VIDEO_SOURCE_DMABUF,
+		VIDEO_SOURCE_STATIC,
+		VIDEO_SOURCE_ENCODED,
+	}
+}

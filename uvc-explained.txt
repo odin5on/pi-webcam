@@ -181,3 +181,103 @@ struct video_source {
 		VIDEO_SOURCE_ENCODED,
 	}
 }
+
+struct uvc_stream {
+	struct video_source *src {
+		documented above
+	}
+	struct uvc_device *uvc {
+		struct v4l2_device *vdev; {
+			int fd;
+			char *name;
+			enum v4l2_buf_type type; {
+				can't find this??
+			}
+			enum v4l2_memory memtype; {
+				can't find this either??
+			}
+			struct list_entry formats; {
+				struct list_entry *prev
+				struct list_entry *next
+			}
+			struct v4l2_pix_format format; {
+				something might be wrong i can't find this
+			}
+			struct v4l2_rect crop; {
+				or this
+			}
+			unsigned int fps;
+			struct video_buffer_set buffers; {
+				struct video_buffer *buffers {
+					unsigned int index;
+					unsigned int size;
+					unsigned int bytesused;
+					struct timeval timestamp;
+					bool error;
+					void *mem;
+					int dmabuf;
+				}
+				unsigned int nbufs
+			}
+		}
+		struct uvc_stream *stream; {
+			circular reference
+		}
+		struct uvc_function_config *fc; {
+			char *video;
+			char *udc;
+			struct uvc_function_config_control control; {
+				struct uvc_function_config_interface intf; {
+					unsigned int bInterfaceNumber;
+				}
+			}
+			struct uvc_function_config_streaming streaming; {
+				struct uvc_function_config_interface intf; {
+					unsigned int bInterfaceNumber;
+				}
+				struct uvc_function_config_endpoint ep; {
+					unsigned int bInterval;
+					unsigned int bMaxBurst;
+					unsigned int wMaxPacketSize;
+				}
+				unsigned int num_formats;
+				struct uvc_function_config_format *formats; {
+					unsigned int index;
+					uint8_t guid[16];
+					unsigned int fcc;
+					unsigned int num_frames;
+					struct uvc_function_config_frame *frames; {
+						unsigned int index;
+						unsigned int width;
+						unsigned int height;
+						unsigned int num_intervals;
+						unsigned int *intervals;
+					}
+				}
+			}
+		}
+		struct uvc_streaming_control probe; {
+			can't find this
+		}
+		struct uvc_streaming_control commit; {
+			same as above (same struct)
+		}
+		int control;
+		unsigned int fcc;
+		unsigned int width;
+		unsigned int height;
+	}
+	struct events *events {
+		struct list_entry events {
+			struct list_entry *prev
+			struct list_entry *next
+		}
+		volatile bool done
+		int maxfd
+		fd_set rfds {
+			__int32_t fds_bits
+		}
+		fd_set wfds;
+		fd_set efds;
+	}
+}

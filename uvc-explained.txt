@@ -281,3 +281,14 @@ struct uvc_stream {
 		fd_set efds;
 	}
 }
+
+struct uvc_function_config *fc {
+	char *video;
+	char *udc;
+	struct uvc_function_config_control control; {
+		defined earlier
+	}
+	struct uvc_function_config_streaming streaming; {
+		defined earlier
+	}
+}

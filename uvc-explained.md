@@ -92,6 +92,18 @@ What this function does:
 	3. Returns pointer to uvc_stream object if everything is successful.
 
 
+/lib/events.c
+
+bool events_loop(struct events *events)
+This is the main capture loop of uvc-gadget
+What this function does:
+
+	1. Sets events.done to false
+	2. While events.done is false
+	3. Creates the fs_set objects rfds, wfds, efds (not sure what these stand for)
+	4. Runs some sort of system select command
+	5. Dispatches an event as long as the system selct command is good.
+	
 
 ## Here I am trying to modal all of the function that are called in main.c of uvc-gadget so that you can get an overview of what is going on. I am listing all of the main functionality and skipping some of the less important things. Although it is possible that I would miss something important.
 

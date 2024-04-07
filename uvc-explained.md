@@ -9,11 +9,11 @@ Processes all of the arguments. Creates a source based on the arguments given (l
 slideshow...). This creates a video_source struct which is passed to some other funcions later.
 
 
-/lib/configfs.c
+#### /lib/configfs.c
 struct uvc_function_config *configfs_parse_uvc_function(const char *function)
 
 
-/lib/v4l2-source.c
+#### /lib/v4l2-source.c
 
 struct video_source *v4l2_video_source_create(const char *devname)
 This function is called when you are using the V4L2 device as a source
@@ -31,7 +31,7 @@ What this function does:
 	7. If everything is successful, it returns a pointer to src (the v4l2_source)
 
 
-/lib/libcamera-source.cpp
+#### /lib/libcamera-source.cpp
 
 stuct video_source *libcamera_source_create(const char *devname)
 This function is called when you use libcamera as the source
@@ -80,7 +80,7 @@ After creating either the libcamera source or the v4l2 source, the program initi
 This essentially binds the events field of the video_source.events
 
 
-/lib/stream.c
+#### /lib/stream.c
 
 struct uvc_stream *uvc_stream_new(const char *uvc_device)
 This function is called and passed the uvc_device (your second argument, probably ucv.0)
@@ -92,7 +92,7 @@ What this function does:
 	3. Returns pointer to uvc_stream object if everything is successful.
 
 
-/lib/events.c
+#### /lib/events.c
 
 bool events_loop(struct events *events)
 This is the main capture loop of uvc-gadget
@@ -103,10 +103,11 @@ What this function does:
 	3. Creates the fs_set objects rfds, wfds, efds (not sure what these stand for)
 	4. Runs some sort of system select command
 	5. Dispatches an event as long as the system selct command is good.
-	
+
 
 ## Here I am trying to modal all of the function that are called in main.c of uvc-gadget so that you can get an overview of what is going on. I am listing all of the main functionality and skipping some of the less important things. Although it is possible that I would miss something important.
 
+```json
 v4l2_video_source_create || libcamera_source_create
 uvc_stream_new
 	uvc_open
@@ -139,12 +140,15 @@ uvc_stream_init_uvc
 		uvc_fill_streaming_control(passes in commit)
 events_loop // main capture loop
 cleanup functions
+````
 
 
 ## Representation of some of the structures (basically objects) used
 
 
-This is what src is in main.c
+These are objects in main.c  
+__src:__
+```json
 struct video_source {
 	const struct video_source_ops *ops {
 		void(*destroy)(struct video_source *src);
@@ -192,7 +196,10 @@ struct video_source {
 		VIDEO_SOURCE_ENCODED,
 	}
 }
+```
 
+__stream:__
+```json
 struct uvc_stream {
 	struct video_source *src {
 		documented above
@@ -292,7 +299,10 @@ struct uvc_stream {
 		fd_set efds;
 	}
 }
+```
 
+__fc:__
+```json
 struct uvc_function_config *fc {
 	char *video;
 	char *udc;
@@ -303,3 +313,4 @@ struct uvc_function_config *fc {
 		defined earlier
 	}
 }
+```

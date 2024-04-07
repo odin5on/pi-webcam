@@ -24,7 +24,7 @@ def main():
     cam.set(cv2.CAP_PROP_FRAME_HEIGHT, VID_HEIGHT)
 
     try:
-        output = os.open(VIDEO_OUT, os.O_RDWR)
+        output = os.open(VIDEO_OUT, os.O_RDWR | os.O_NONBLOCK)
     except Exception as ex:
         print("ERROR: could not open output device!")
         print(str(ex))

@@ -99,6 +99,7 @@ def main():
 
     # Zoom factor control
     current_zoom_factor = 1.0  # Start with no zoom
+    frame_counter = 0
 
     while cap.isOpened():
         success, image = cap.read()
@@ -107,56 +108,61 @@ def main():
             continue
 
         zoom_changed = False
+        
+        if frame_counter % 5 == 0:
+            if camera_on:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                resultsHand = hands.process(image)
 
-        if camera_on:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            resultsHand = hands.process(image)
+                if resultsHand.multi_hand_landmarks:
+                    for hand_landmarks in resultsHand.multi_hand_landmarks:
+                        mp_draw.draw_landmarks(
+                            image, hand_landmarks, mp_hands.HAND_CONNECTIONS
+                        )
 
-            if resultsHand.multi_hand_landmarks:
-                for hand_landmarks in resultsHand.multi_hand_landmarks:
-                    mp_draw.draw_landmarks(
-                        image, hand_landmarks, mp_hands.HAND_CONNECTIONS
-                    )
+                        if check_index_fingers_crossed(
+                            mp_hands, resultsHand.multi_hand_landmarks
+                        ):
+                            camera_on = False  # "Turn off" the camera
 
-                    if check_index_fingers_crossed(mp_hands, resultsHand.multi_hand_landmarks):
-                        camera_on = False  # "Turn off" the camera
+                        # Check for thumbs-up (zoom in)
+                        elif check_thumb_position(
+                            mp_hands, hand_landmarks, lambda thumb, others: thumb < others
+                        ):
+                            current_zoom_factor *= 1.01  # Increase zoom by 1%
+                            zoom_changed = True
 
-                    # Check for thumbs-up (zoom in)
-                    elif check_thumb_position(
-                        mp_hands, hand_landmarks, lambda thumb, others: thumb < others
-                    ):
-                        current_zoom_factor *= 1.01  # Increase zoom by 1%
-                        zoom_changed = True
+                        # Check for thumbs-down (zoom out)
+                        elif check_thumb_position(
+                            mp_hands, hand_landmarks, lambda thumb, others: thumb > others
+                        ):
+                            current_zoom_factor /= 1.01  # Decrease zoom by 1%
+                            zoom_changed = True
 
-                    # Check for thumbs-down (zoom out)
-                    elif check_thumb_position(
-                        mp_hands, hand_landmarks, lambda thumb, others: thumb > others
-                    ):
-                        current_zoom_factor /= 1.01  # Decrease zoom by 1%
-                        zoom_changed = True
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            else:
+                # Camera is "off": display a black screen with your name
+                image = np.zeros((480, 640, 3), dtype=np.uint8)  # Create a black image
+                cv2.putText(
+                    image,
+                    "80",
+                    (50, 240),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (255, 255, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
+            frame_counter = 0
 
-        else:
-            # Camera is "off": display a black screen with your name
-            image = np.zeros((480, 640, 3), dtype=np.uint8)  # Create a black image
-            cv2.putText(
-                image,
-                "80",
-                (50, 240),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (255, 255, 255),
-                2,
-                cv2.LINE_AA,
-            )
-
+        frame_counter += 1
         # Apply the current zoom factor, if changed
-        if zoom_changed:
-            current_zoom_factor = max(
-                1.0, min(current_zoom_factor, 3.0)
-            )  # Limit zoom factor range for practicality
-            image = zoom_image(image, current_zoom_factor)
+        # if zoom_changed:
+        current_zoom_factor = max(
+            1.0, min(current_zoom_factor, 3.0)
+        )  # Limit zoom factor range for practicality
+        image = zoom_image(image, current_zoom_factor)
 
         cv2.imshow("MediaPipe Hands", image)
 

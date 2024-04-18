@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
+mp_face_detection = mp.solutions.face_detection
 
 def check_index_fingers_crossed(mp_hands, hands_landmarks):
     # Assuming hands_landmarks contains landmarks for both hands
@@ -82,7 +83,16 @@ def zoom_image(image, zoom_factor):
     return cropped_image
 
 
+# def detect_bounding_box(vid):
+#     gray_image = cv2.cvtColor(vid, cv2.COLOR_BGR2GRAY)
+#     faces = face_classifier.detectMultiScale(gray_image, 1.3, 8, minSize=(40, 40))
+#     for (x, y, w, h) in faces:
+#         cv2.rectangle(vid, (x, y), (x + w, y + h), (0, 255, 0), 4)
+#     return faces
+
 def main():
+
+
     # Initialize MediaPipe Hands.
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
@@ -101,79 +111,107 @@ def main():
     current_zoom_factor = 1.0  # Start with no zoom
     frame_counter = 0
 
-    while cap.isOpened():
-        success, image = cap.read()
-        if not success:
-            print("Ignoring empty camera frame.")
-            continue
-
-        zoom_changed = False
+    with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detector:
         
-        if frame_counter % 5 == 0:
-            if camera_on:
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                resultsHand = hands.process(image)
 
-                if resultsHand.multi_hand_landmarks:
-                    for hand_landmarks in resultsHand.multi_hand_landmarks:
-                        mp_draw.draw_landmarks(
-                            image, hand_landmarks, mp_hands.HAND_CONNECTIONS
-                        )
+        while cap.isOpened():
+            success, image = cap.read()
+            if not success:
+                print("Ignoring empty camera frame.")
+                continue
 
-                        if check_index_fingers_crossed(
-                            mp_hands, resultsHand.multi_hand_landmarks
-                        ):
-                            camera_on = False  # "Turn off" the camera
+            zoom_changed = False
 
-                        # Check for thumbs-up (zoom in)
-                        elif check_thumb_position(
-                            mp_hands, hand_landmarks, lambda thumb, others: thumb < others
-                        ):
-                            current_zoom_factor *= 1.01  # Increase zoom by 1%
-                            zoom_changed = True
+            rgb_frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-                        # Check for thumbs-down (zoom out)
-                        elif check_thumb_position(
-                            mp_hands, hand_landmarks, lambda thumb, others: thumb > others
-                        ):
-                            current_zoom_factor /= 1.01  # Decrease zoom by 1%
-                            zoom_changed = True
+            results_face = face_detector.process(rgb_frame)
+            frame_height, frame_width, c = image.shape
+            if results_face.detections:
+                for face in results_face.detections:
+                    face_react = np.multiply(
+                        [
+                            face.location_data.relative_bounding_box.xmin,
+                            face.location_data.relative_bounding_box.ymin,
+                            face.location_data.relative_bounding_box.width,
+                            face.location_data.relative_bounding_box.height,
+                        ],
+                        [frame_width, frame_height, frame_width, frame_height]).astype(int)
+                    
+                    cv2.rectangle(image, face_react, color=(255, 255, 255), thickness=2)
+                    key_points = np.array([(p.x, p.y) for p in face.location_data.relative_keypoints])
+                    key_points_coords = np.multiply(key_points,[frame_width,frame_height]).astype(int)
+                    for p in key_points_coords:
+                        cv2.circle(image, p, 4, (255, 255, 255), 2)
+                        cv2.circle(image, p, 2, (0, 0, 0), -1)
+            
+            if frame_counter % 5 == 0:
+                if camera_on:
+                    resultsHand = hands.process(rgb_frame)
 
-                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                    if resultsHand.multi_hand_landmarks:
+                        for hand_landmarks in resultsHand.multi_hand_landmarks:
+                            mp_draw.draw_landmarks(
+                                image, hand_landmarks, mp_hands.HAND_CONNECTIONS
+                            )
 
-            else:
-                # Camera is "off": display a black screen with your name
-                image = np.zeros((480, 640, 3), dtype=np.uint8)  # Create a black image
-                cv2.putText(
-                    image,
-                    "80",
-                    (50, 240),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (255, 255, 255),
-                    2,
-                    cv2.LINE_AA,
-                )
-            frame_counter = 0
+                            if check_index_fingers_crossed(
+                                mp_hands, resultsHand.multi_hand_landmarks
+                            ):
+                                camera_on = False  # "Turn off" the camera
 
-        frame_counter += 1
-        # Apply the current zoom factor, if changed
-        # if zoom_changed:
-        current_zoom_factor = max(
-            1.0, min(current_zoom_factor, 3.0)
-        )  # Limit zoom factor range for practicality
-        image = zoom_image(image, current_zoom_factor)
+                            # Check for thumbs-up (zoom in)
+                            elif check_thumb_position(
+                                mp_hands, hand_landmarks, lambda thumb, others: thumb < others
+                            ):
+                                current_zoom_factor *= 1.01  # Increase zoom by 1%
+                                zoom_changed = True
 
-        cv2.imshow("MediaPipe Hands", image)
+                            # Check for thumbs-down (zoom out)
+                            elif check_thumb_position(
+                                mp_hands, hand_landmarks, lambda thumb, others: thumb > others
+                            ):
+                                current_zoom_factor /= 1.01  # Decrease zoom by 1%
+                                zoom_changed = True
 
-        # Press escape to exit
-        if cv2.waitKey(5) & 0xFF == 27:
-            break
-        elif cv2.waitKey(5) & 0xFF == ord("c"):
-            camera_on = True  # Toggle camera back on
+                    # image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-    cap.release()
-    cv2.destroyAllWindows()
+                else:
+                    # Camera is "off": display a black screen with your name
+                    image = np.zeros((480, 640, 3), dtype=np.uint8)  # Create a black image
+                    cv2.putText(
+                        image,
+                        "80",
+                        (50, 240),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (255, 255, 255),
+                        2,
+                        cv2.LINE_AA,
+                    )
+                frame_counter = 0
+
+            # faces = detect_bounding_box(
+            #     image
+            # )
+
+            frame_counter += 1
+            # Apply the current zoom factor, if changed
+            # if zoom_changed:
+            current_zoom_factor = max(
+                1.0, min(current_zoom_factor, 3.0)
+            )  # Limit zoom factor range for practicality
+            image = zoom_image(image, current_zoom_factor)
+
+            cv2.imshow("MediaPipe Hands", image)
+
+            # Press escape to exit
+            if cv2.waitKey(5) & 0xFF == 27:
+                break
+            elif cv2.waitKey(5) & 0xFF == ord("c"):
+                camera_on = True  # Toggle camera back on
+
+        cap.release()
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":

@@ -102,6 +102,7 @@ def main():
         min_tracking_confidence=0.5,
     )
     mp_draw = mp.solutions.drawing_utils
+
     # Initialize webcam capture.
     cap = cv2.VideoCapture(0)
 
@@ -125,26 +126,68 @@ def main():
             rgb_frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
             results_face = face_detector.process(rgb_frame)
-            frame_height, frame_width, c = image.shape
+            image_height, image_width, c = image.shape
+            
             if results_face.detections:
                 for face in results_face.detections:
-                    face_react = np.multiply(
-                        [
-                            face.location_data.relative_bounding_box.xmin,
-                            face.location_data.relative_bounding_box.ymin,
-                            face.location_data.relative_bounding_box.width,
-                            face.location_data.relative_bounding_box.height,
-                        ],
-                        [frame_width, frame_height, frame_width, frame_height]).astype(int)
+                    bboxC = face.location_data.relative_bounding_box
+                    bbox = int(bboxC.xmin * image_width), int(bboxC.ymin * image_height), int(bboxC.width * image_width), int(bboxC.height * image_height)
+                    center_x = bbox[0] + bbox[2] // 2
+                    center_y = bbox[1] + bbox[3] // 2
+
+                    # Calculate the shift needed to center the face
+                    shift_x = image_width // 2 - center_x
+                    shift_y = image_height // 2 - center_y
+                    print('shift_x', shift_x)
+                    print('shift_y', shift_y)
+
+                    max_x_shift = (image_width - (image_width // current_zoom_factor)) / 2
+                    max_y_shift = (image_height - (image_height // current_zoom_factor)) / 2
+                    print('max_x_shift', max_x_shift)
+                    print('max_y_shift', max_y_shift)
+
+                    shift_x = min(abs(shift_x), max_x_shift) * np.sign(shift_x)
+                    shift_y = min(abs(shift_y), max_y_shift) * np.sign(shift_y)
+                    print('final shift_x', shift_x)
+                    print('final shift_y', shift_y)
+
+                    M = np.float32([[1, 0, shift_x], [0, 1, shift_y]])
+                    shifted_image = cv2.warpAffine(image, M, (image_width, image_height))
+
+                    zoom_on_shifted_image = zoom_image(shifted_image, current_zoom_factor)
+
+                    # zoomed_image = cv2.resize(image, None, fx=current_zoom_factor, fy=current_zoom_factor)
+                    # zoomed_image = zoom_image(image, current_zoom_factor)
+                    # rows, cols, _ = zoomed_image.shape * current_zoom_factor
+                    # rows = int(image_height / current_zoom_factor)
+                    # cols = int(image_width / current_zoom_factor)
+                    # print('image', image.shape)
+                    # print('zoomed_image', rows, cols)
+
+                    # # Ensure the shift does not move the image outside of its boundaries
+                    # shift_x = max(min(shift_x, cols - image_width), -cols + image_width)
+                    # shift_y = max(min(shift_y, rows - image_height), -rows + image_height)
+
+                    # M = np.float32([[1, 0, shift_x], [0, 1, shift_y]])
+                    # zoomed_and_shifted_image = cv2.warpAffine(zoomed_image, M, (cols, rows))
+
+                    # face_react = np.multiply(
+                    #     [
+                    #         face.location_data.relative_bounding_box.xmin,
+                    #         face.location_data.relative_bounding_box.ymin,
+                    #         face.location_data.relative_bounding_box.width,
+                    #         face.location_data.relative_bounding_box.height,
+                    #     ],
+                    #     [image_width, image_height, image_width, image_height]).astype(int)
                     
-                    cv2.rectangle(image, face_react, color=(255, 255, 255), thickness=2)
-                    key_points = np.array([(p.x, p.y) for p in face.location_data.relative_keypoints])
-                    key_points_coords = np.multiply(key_points,[frame_width,frame_height]).astype(int)
-                    for p in key_points_coords:
-                        cv2.circle(image, p, 4, (255, 255, 255), 2)
-                        cv2.circle(image, p, 2, (0, 0, 0), -1)
+                    # cv2.rectangle(image, face_react, color=(255, 255, 255), thickness=2)
+                    # key_points = np.array([(p.x, p.y) for p in face.location_data.relative_keypoints])
+                    # key_points_coords = np.multiply(key_points,[image_width,image_height]).astype(int)
+                    # for p in key_points_coords:
+                    #     cv2.circle(image, p, 4, (255, 255, 255), 2)
+                    #     cv2.circle(image, p, 2, (0, 0, 0), -1)
             
-            if frame_counter % 5 == 0:
+            if frame_counter % 2 == 0:
                 if camera_on:
                     resultsHand = hands.process(rgb_frame)
 
@@ -190,19 +233,15 @@ def main():
                     )
                 frame_counter = 0
 
-            # faces = detect_bounding_box(
-            #     image
-            # )
-
             frame_counter += 1
             # Apply the current zoom factor, if changed
             # if zoom_changed:
             current_zoom_factor = max(
-                1.0, min(current_zoom_factor, 3.0)
+                1.0, min(current_zoom_factor, 5.0)
             )  # Limit zoom factor range for practicality
             image = zoom_image(image, current_zoom_factor)
 
-            cv2.imshow("MediaPipe Hands", image)
+            cv2.imshow("MediaPipe Hands", zoom_on_shifted_image)
 
             # Press escape to exit
             if cv2.waitKey(5) & 0xFF == 27:

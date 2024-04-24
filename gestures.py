@@ -137,8 +137,8 @@ def main():
                     # Calculate the shift needed to center the face
                     shift_x = image_width // 2 - center_x
                     shift_y = image_height // 2 - center_y
-                    print("shift_x", shift_x)
-                    print("shift_y", shift_y)
+                    # print("shift_x", shift_x)
+                    # print("shift_y", shift_y)
 
                     max_x_shift = (
                         image_width - (image_width // current_zoom_factor)
@@ -146,31 +146,27 @@ def main():
                     max_y_shift = (
                         image_height - (image_height // current_zoom_factor)
                     ) / 2
-                    print("max_x_shift", max_x_shift)
-                    print("max_y_shift", max_y_shift)
+                    # print("max_x_shift", max_x_shift)
+                    # print("max_y_shift", max_y_shift)
 
                     shift_x = min(abs(shift_x), max_x_shift) * np.sign(shift_x)
                     shift_y = min(abs(shift_y), max_y_shift) * np.sign(shift_y)
-                    print("final shift_x", shift_x)
-                    print("final shift_y", shift_y)
+                    # print("final shift_x", shift_x)
+                    # print("final shift_y", shift_y)
 
                     M = np.float32([[1, 0, shift_x], [0, 1, shift_y]])
                     shifted_image = cv2.warpAffine(
                         image, M, (image_width, image_height)
                     )
 
-                    zoom_on_shifted_image = zoom_image(
-                        shifted_image, current_zoom_factor
-                    )
-
-            if frame_counter % 2 == 0:
+            if frame_counter % 4 == 0:
                 if camera_on:
                     resultsHand = hands.process(rgb_frame)
 
                     if resultsHand.multi_hand_landmarks:
                         for hand_landmarks in resultsHand.multi_hand_landmarks:
                             mp_draw.draw_landmarks(
-                                image, hand_landmarks, mp_hands.HAND_CONNECTIONS
+                                shifted_image, hand_landmarks, mp_hands.HAND_CONNECTIONS
                             )
 
                             if check_index_fingers_crossed(
@@ -184,7 +180,7 @@ def main():
                                 hand_landmarks,
                                 lambda thumb, others: thumb < others,
                             ):
-                                current_zoom_factor *= 1.01  # Increase zoom by 1%
+                                current_zoom_factor *= 1.05  # Increase zoom by 1%
                                 zoom_changed = True
 
                             # Check for thumbs-down (zoom out)
@@ -193,14 +189,14 @@ def main():
                                 hand_landmarks,
                                 lambda thumb, others: thumb > others,
                             ):
-                                current_zoom_factor /= 1.01  # Decrease zoom by 1%
+                                current_zoom_factor /= 1.05  # Decrease zoom by 1%
                                 zoom_changed = True
 
                     # image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
                 else:
                     # Camera is "off": display a black screen with your name
-                    image = np.zeros(
+                    shifted_image = np.zeros(
                         (480, 640, 3), dtype=np.uint8
                     )  # Create a black image
                     cv2.putText(
@@ -217,11 +213,11 @@ def main():
 
             frame_counter += 1
             # Apply the current zoom factor, if changed
-            # if zoom_changed:
-            current_zoom_factor = max(
-                1.0, min(current_zoom_factor, 5.0)
-            )  # Limit zoom factor range for practicality
-            image = zoom_image(image, current_zoom_factor)
+            if zoom_changed:
+                current_zoom_factor = max(
+                    1.0, min(current_zoom_factor, 5.0)
+                )  # Limit zoom factor range for practicality
+            zoom_on_shifted_image = zoom_image(shifted_image, current_zoom_factor)
 
             cv2.imshow("MediaPipe Hands", zoom_on_shifted_image)
 

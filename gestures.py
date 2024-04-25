@@ -84,6 +84,30 @@ def zoom_image(image, zoom_factor):
     return cropped_image
 
 
+def blur_background(image, face_bbox):
+    # Create a mask with the same size as the image
+    mask = np.zeros_like(image)
+
+    # Draw a filled rectangle on the mask to represent the face region
+    cv2.rectangle(
+        mask,
+        (face_bbox[0], face_bbox[1]),
+        (face_bbox[0] + face_bbox[2], face_bbox[1] + face_bbox[3]),
+        (255, 255, 255),
+        -1,
+    )
+
+    # Apply a blur filter to the entire image
+    blurred_image = cv2.GaussianBlur(image, (99, 99), 0)
+
+    # Use the mask to blend the original image with the blurred image
+    blended_image = cv2.bitwise_and(image, mask) + cv2.bitwise_and(
+        blurred_image, cv2.bitwise_not(mask)
+    )
+
+    return blended_image
+
+
 def main():
 
     # Initialize MediaPipe Hands.
@@ -100,6 +124,7 @@ def main():
     cap = cv2.VideoCapture(0)
 
     camera_on = True  # Initial state
+    blur_on = False  # Initial state
 
     # Zoom factor control
     current_zoom_factor = 1.0  # Start with no zoom
@@ -149,6 +174,10 @@ def main():
                             int(bboxC.width * image_width),
                             int(bboxC.height * image_height),
                         )
+
+                        if blur_on:
+                            image = blur_background(image, bbox)
+
                         center_x = bbox[0] + bbox[2] // 2
                         center_y = bbox[1] + bbox[3] // 2
 
@@ -228,6 +257,8 @@ def main():
                 break
             elif cv2.waitKey(5) & 0xFF == ord("c"):
                 camera_on = True  # Toggle camera back on
+            elif cv2.waitKey(5) & 0xFF == ord("b"):
+                blur_on = not blur_on
 
         cap.release()
         cv2.destroyAllWindows()

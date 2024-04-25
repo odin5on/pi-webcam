@@ -110,57 +110,75 @@ def main():
     ) as face_detector:
 
         while cap.isOpened():
-            success, image = cap.read()
-            if not success:
-                print("Ignoring empty camera frame.")
-                continue
 
-            zoom_changed = False
+            if not camera_on:
+                # Camera is "off": display a black screen with your name
+                shifted_image = np.zeros(
+                    (720, 1280, 3), dtype=np.uint8
+                )  # Create a black image
+                cv2.putText(
+                    image,
+                    "80",
+                    (50, 240),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (255, 255, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
 
-            rgb_frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            else:
+                success, image = cap.read()
+                if not success:
+                    print("Ignoring empty camera frame.")
+                    continue
 
-            results_face = face_detector.process(rgb_frame)
-            image_height, image_width, c = image.shape
+                zoom_changed = False
 
-            if results_face.detections:
-                for face in results_face.detections:
-                    bboxC = face.location_data.relative_bounding_box
-                    bbox = (
-                        int(bboxC.xmin * image_width),
-                        int(bboxC.ymin * image_height),
-                        int(bboxC.width * image_width),
-                        int(bboxC.height * image_height),
-                    )
-                    center_x = bbox[0] + bbox[2] // 2
-                    center_y = bbox[1] + bbox[3] // 2
+                rgb_frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-                    # Calculate the shift needed to center the face
-                    shift_x = image_width // 2 - center_x
-                    shift_y = image_height // 2 - center_y
-                    # print("shift_x", shift_x)
-                    # print("shift_y", shift_y)
+                results_face = face_detector.process(rgb_frame)
+                image_height, image_width, c = image.shape
 
-                    max_x_shift = (
-                        image_width - (image_width // current_zoom_factor)
-                    ) / 2
-                    max_y_shift = (
-                        image_height - (image_height // current_zoom_factor)
-                    ) / 2
-                    # print("max_x_shift", max_x_shift)
-                    # print("max_y_shift", max_y_shift)
+                if results_face.detections:
+                    for face in results_face.detections:
+                        bboxC = face.location_data.relative_bounding_box
+                        bbox = (
+                            int(bboxC.xmin * image_width),
+                            int(bboxC.ymin * image_height),
+                            int(bboxC.width * image_width),
+                            int(bboxC.height * image_height),
+                        )
+                        center_x = bbox[0] + bbox[2] // 2
+                        center_y = bbox[1] + bbox[3] // 2
 
-                    shift_x = min(abs(shift_x), max_x_shift) * np.sign(shift_x)
-                    shift_y = min(abs(shift_y), max_y_shift) * np.sign(shift_y)
-                    # print("final shift_x", shift_x)
-                    # print("final shift_y", shift_y)
+                        # Calculate the shift needed to center the face
+                        shift_x = image_width // 2 - center_x
+                        shift_y = image_height // 2 - center_y
+                        # print("shift_x", shift_x)
+                        # print("shift_y", shift_y)
 
-                    M = np.float32([[1, 0, shift_x], [0, 1, shift_y]])
-                    shifted_image = cv2.warpAffine(
-                        image, M, (image_width, image_height)
-                    )
+                        max_x_shift = (
+                            image_width - (image_width // current_zoom_factor)
+                        ) / 2
+                        max_y_shift = (
+                            image_height - (image_height // current_zoom_factor)
+                        ) / 2
+                        # print("max_x_shift", max_x_shift)
+                        # print("max_y_shift", max_y_shift)
 
-            if frame_counter % 4 == 0:
-                if camera_on:
+                        shift_x = min(abs(shift_x), max_x_shift) * np.sign(shift_x)
+                        shift_y = min(abs(shift_y), max_y_shift) * np.sign(shift_y)
+                        # print("final shift_x", shift_x)
+                        # print("final shift_y", shift_y)
+
+                        M = np.float32([[1, 0, shift_x], [0, 1, shift_y]])
+                        shifted_image = cv2.warpAffine(
+                            image, M, (image_width, image_height)
+                        )
+
+                if frame_counter % 4 == 0:
+
                     resultsHand = hands.process(rgb_frame)
 
                     if resultsHand.multi_hand_landmarks:
@@ -192,31 +210,15 @@ def main():
                                 current_zoom_factor /= 1.05  # Decrease zoom by 1%
                                 zoom_changed = True
 
-                    # image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                    frame_counter = 0
 
-                else:
-                    # Camera is "off": display a black screen with your name
-                    shifted_image = np.zeros(
-                        (480, 640, 3), dtype=np.uint8
-                    )  # Create a black image
-                    cv2.putText(
-                        image,
-                        "80",
-                        (50, 240),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        1,
-                        (255, 255, 255),
-                        2,
-                        cv2.LINE_AA,
-                    )
-                frame_counter = 0
+                frame_counter += 1
+                # Apply the current zoom factor, if changed
+                if zoom_changed:
+                    current_zoom_factor = max(
+                        1.0, min(current_zoom_factor, 5.0)
+                    )  # Limit zoom factor range for practicality
 
-            frame_counter += 1
-            # Apply the current zoom factor, if changed
-            if zoom_changed:
-                current_zoom_factor = max(
-                    1.0, min(current_zoom_factor, 5.0)
-                )  # Limit zoom factor range for practicality
             zoom_on_shifted_image = zoom_image(shifted_image, current_zoom_factor)
 
             cv2.imshow("MediaPipe Hands", zoom_on_shifted_image)

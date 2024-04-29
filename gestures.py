@@ -108,6 +108,19 @@ def blur_background(image, face_bbox):
     return blended_image
 
 
+def check_pointer_finger_position(mp_hands, hand_landmarks):
+    # Get the y-coordinate of the pointer finger tip
+    pointer_finger_tip_y = hand_landmarks.landmark[
+        mp_hands.HandLandmark.INDEX_FINGER_TIP
+    ].y
+    # Get the height of the screen
+    screen_height = 720  # Assuming a screen height of 720 pixels
+    # Check if the pointer finger is in the top half of the screen
+    if (pointer_finger_tip_y * screen_height) < (screen_height / 6):
+        return True
+    return False
+
+
 def main():
 
     # Initialize MediaPipe Hands.
@@ -138,7 +151,7 @@ def main():
 
             if not camera_on:
                 # Camera is "off": display a black screen with your name
-                shifted_image = np.zeros(
+                zoom_on_shifted_image = np.zeros(
                     (720, 1280, 3), dtype=np.uint8
                 )  # Create a black image
                 cv2.putText(
@@ -206,38 +219,81 @@ def main():
                             image, M, (image_width, image_height)
                         )
 
-                if frame_counter % 4 == 0:
+                zoom_on_shifted_image = zoom_image(shifted_image, current_zoom_factor)
 
-                    resultsHand = hands.process(rgb_frame)
+                if frame_counter % 5 == 0:
+
+                    resultsHand = hands.process(zoom_on_shifted_image)
 
                     if resultsHand.multi_hand_landmarks:
                         for hand_landmarks in resultsHand.multi_hand_landmarks:
-                            mp_draw.draw_landmarks(
-                                shifted_image, hand_landmarks, mp_hands.HAND_CONNECTIONS
+                            pointer_finger_tip_y = (
+                                hand_landmarks.landmark[
+                                    mp_hands.HandLandmark.INDEX_FINGER_TIP
+                                ].y
+                                * image_width
+                            )
+                            pointer_finger_tip_x = (
+                                hand_landmarks.landmark[
+                                    mp_hands.HandLandmark.INDEX_FINGER_TIP
+                                ].x
+                                * image_height
                             )
 
-                            if check_index_fingers_crossed(
-                                mp_hands, resultsHand.multi_hand_landmarks
-                            ):
-                                camera_on = False  # "Turn off" the camera
+                            # mp_draw.draw_landmarks(
+                            #     shifted_image, hand_landmarks, mp_hands.HAND_CONNECTIONS
+                            # )
 
-                            # Check for thumbs-up (zoom in)
-                            elif check_thumb_position(
-                                mp_hands,
-                                hand_landmarks,
-                                lambda thumb, others: thumb < others,
-                            ):
-                                current_zoom_factor *= 1.05  # Increase zoom by 1%
-                                zoom_changed = True
+                            # if check_index_fingers_crossed(
+                            #     mp_hands, resultsHand.multi_hand_landmarks
+                            # ):
+                            #     camera_on = False  # "Turn off" the camera
 
-                            # Check for thumbs-down (zoom out)
-                            elif check_thumb_position(
-                                mp_hands,
-                                hand_landmarks,
-                                lambda thumb, others: thumb > others,
-                            ):
-                                current_zoom_factor /= 1.05  # Decrease zoom by 1%
-                                zoom_changed = True
+                            # # Check for thumbs-up (zoom in)
+                            # elif check_thumb_position(
+                            #     mp_hands,
+                            #     hand_landmarks,
+                            #     lambda thumb, others: thumb < others,
+                            # ):
+                            #     current_zoom_factor *= 1.05  # Increase zoom by 1%
+                            #     zoom_changed = True
+
+                            # # Check for thumbs-down (zoom out)
+                            # elif check_thumb_position(
+                            #     mp_hands,
+                            #     hand_landmarks,
+                            #     lambda thumb, others: thumb > others,
+                            # ):
+                            #     current_zoom_factor /= 1.05  # Decrease zoom by 1%
+                            #     zoom_changed = True
+
+                            # if check_pointer_finger_position(mp_hands, hand_landmarks):
+                            #     print("Pointer finger is in the top fourth of the screen")
+
+                            if pointer_finger_tip_y < image_width / 6:
+                                print(
+                                    "Pointer finger is in the top sixth of the screen"
+                                )
+                                if pointer_finger_tip_x < image_height / 6:
+                                    print("Pointer finger is in the leftmost part of the screen")
+                                    current_zoom_factor *= 1.05
+                                    zoom_changed = True
+                                elif pointer_finger_tip_x < 2 * image_height / 6:
+                                    print("Pointer finger is in the second part of the screen")
+                                    current_zoom_factor /= 1.05
+                                    zoom_changed = True
+                                elif pointer_finger_tip_x < 3 * image_height / 6:
+                                    print("Pointer finger is in the third part of the screen")
+                                    
+                                elif pointer_finger_tip_x < 4 * image_height / 6:
+                                    print("Pointer finger is in the fourth part of the screen")
+                                    
+                                elif pointer_finger_tip_x < 5 * image_height / 6:
+                                    print("Pointer finger is in the fifth part of the screen")
+                                    
+                                else:
+                                    print("Pointer finger is in the rightmost part of the screen")
+                                    
 
                     frame_counter = 0
 
@@ -248,9 +304,44 @@ def main():
                         1.0, min(current_zoom_factor, 5.0)
                     )  # Limit zoom factor range for practicality
 
-            zoom_on_shifted_image = zoom_image(shifted_image, current_zoom_factor)
+                # Draw a box around the top 6th part of the screen
 
+            
+            for i in range(6):
+                cv2.rectangle(
+                    zoom_on_shifted_image,
+                    (i * (image_width // 6), 0),
+                    ((i + 1) * (image_width // 6), image_height // 6),
+                    (0, 255, 0),
+                    2,
+                )
+
+            # Draw a plus sign in the leftmost rectangle
+            cv2.putText(
+                zoom_on_shifted_image,
+                "+",
+                (image_width // 12, image_height // 12),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                2,
+                (255, 0, 0),
+                2,
+                cv2.LINE_AA,
+            )
+
+            # Draw a minus sign in the second left rectangle
+            cv2.putText(
+                zoom_on_shifted_image,
+                "-",
+                (3 * image_width // 12, image_height // 12),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                2,
+                (255, 0, 0),
+                2,
+                cv2.LINE_AA,
+            )
             cv2.imshow("MediaPipe Hands", zoom_on_shifted_image)
+
+            # print("Dimensions of zoom_on_shifted_image:", zoom_on_shifted_image.shape)
 
             # Press escape to exit
             if cv2.waitKey(5) & 0xFF == 27:

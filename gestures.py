@@ -302,10 +302,13 @@ def main():
                                     print("Pointer finger is in the fourth part of the screen")
                                     
                                 elif pointer_finger_tip_x < 5 * image_height / 6:
-                                    
+                                    if(brightness < 100):
+                                        brightness += 20
                                     print("Pointer finger is in the fifth part of the screen")
                                     
                                 else:
+                                    if(brightness >-60):
+                                        brightness -= 20
                                     print("Pointer finger is in the rightmost part of the screen")
                                     
 
@@ -386,10 +389,34 @@ def main():
                 cv2.LINE_AA,
             )
 
+            # Draw a sun in the second from right rectangle
+            cv2.putText(
+                zoom_on_shifted_image,
+                "*",
+                ((9 * image_width // 12)-10, (image_height // 12)+15),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                2,
+                (255, 0, 0),
+                2,
+                cv2.LINE_AA,
+            )
+
+            # Draw a sun in the rightmost rectangle
+            cv2.putText(
+                zoom_on_shifted_image,
+                "/*",
+                ((11 * image_width // 12)-40, (image_height // 12)+15),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                2,
+                (255, 0, 0),
+                2,
+                cv2.LINE_AA,
+            )
+
             cv2.circle(zoom_on_shifted_image, (pointer_x, pointer_y), 10, (255, 255, 255), 2)
 
             zoom_on_shifted_image = cv2.addWeighted(
-                zoom_on_shifted_image, 1, np.zeros(zoom_on_shifted_image.shape, zoom_on_shifted_image.dtype), 0, 100
+                zoom_on_shifted_image, 1, np.zeros(zoom_on_shifted_image.shape, zoom_on_shifted_image.dtype), 0, brightness
             )
 
             cv2.imshow("MediaPipe Hands", zoom_on_shifted_image)

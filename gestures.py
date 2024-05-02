@@ -133,6 +133,10 @@ def main():
     )
     mp_draw = mp.solutions.drawing_utils
 
+    pointer_x = 0
+    pointer_y = 0
+
+    brightness = 0
     # Initialize webcam capture.
     cap = cv2.VideoCapture(0)
 
@@ -188,9 +192,6 @@ def main():
                             int(bboxC.height * image_height),
                         )
 
-                        if blur_on:
-                            image = blur_background(image, bbox)
-
                         center_x = bbox[0] + bbox[2] // 2
                         center_y = bbox[1] + bbox[3] // 2
 
@@ -241,8 +242,18 @@ def main():
                             )
 
                             # mp_draw.draw_landmarks(
-                            #     shifted_image, hand_landmarks, mp_hands.HAND_CONNECTIONS
+                            #     shifted_image, hand_landmarks, mp_hands.HAND_CONNECTIONS,
+                            #     mp_draw.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
+                            #     mp_draw.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2),
                             # )
+
+                            # Draw a circle over the pointer finger
+                            pointer_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
+                            x = int(pointer_finger_tip.x * image_width)
+                            y = int(pointer_finger_tip.y * image_height)
+                            pointer_x = x
+                            pointer_y = y
+                            
 
                             # if check_index_fingers_crossed(
                             #     mp_hands, resultsHand.multi_hand_landmarks
@@ -283,12 +294,15 @@ def main():
                                     current_zoom_factor /= 1.05
                                     zoom_changed = True
                                 elif pointer_finger_tip_x < 3 * image_height / 6:
+                                    blur_on = not blur_on
                                     print("Pointer finger is in the third part of the screen")
                                     
                                 elif pointer_finger_tip_x < 4 * image_height / 6:
+                                    camera_on = False
                                     print("Pointer finger is in the fourth part of the screen")
                                     
                                 elif pointer_finger_tip_x < 5 * image_height / 6:
+                                    
                                     print("Pointer finger is in the fifth part of the screen")
                                     
                                 else:
@@ -304,9 +318,17 @@ def main():
                         1.0, min(current_zoom_factor, 5.0)
                     )  # Limit zoom factor range for practicality
 
-                # Draw a box around the top 6th part of the screen
+                if blur_on:
+                    bbox = (
+                        int(bbox[0] + (shift_x)),
+                        int(bbox[1] + (shift_y)),
+                        int(bbox[2] * current_zoom_factor),
+                        int(bbox[3] * current_zoom_factor)
+                    )
+                    zoom_on_shifted_image = blur_background(zoom_on_shifted_image, bbox)
 
             
+            # Draw a box around the top 6th part of the screen
             for i in range(6):
                 cv2.rectangle(
                     zoom_on_shifted_image,
@@ -320,7 +342,7 @@ def main():
             cv2.putText(
                 zoom_on_shifted_image,
                 "+",
-                (image_width // 12, image_height // 12),
+                ((image_width // 12)-25, (image_height // 12)+15),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 2,
                 (255, 0, 0),
@@ -332,13 +354,44 @@ def main():
             cv2.putText(
                 zoom_on_shifted_image,
                 "-",
-                (3 * image_width // 12, image_height // 12),
+                ((3 * image_width // 12)-25, (image_height // 12)+15),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 2,
                 (255, 0, 0),
                 2,
                 cv2.LINE_AA,
             )
+
+            # Draw a blur sign in the third left rectangle
+            cv2.putText(
+                zoom_on_shifted_image,
+                "B",
+                ((5 * image_width // 12)-15, (image_height // 12)+15),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                2,
+                (255, 0, 0),
+                2,
+                cv2.LINE_AA,
+            )
+
+            # Draw an "off" sign in the third right rectangle
+            cv2.putText(
+                zoom_on_shifted_image,
+                "OFF",
+                ((7 * image_width // 12)-55, (image_height // 12)+15),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                2,
+                (255, 0, 0),
+                2,
+                cv2.LINE_AA,
+            )
+
+            cv2.circle(zoom_on_shifted_image, (pointer_x, pointer_y), 10, (255, 255, 255), 2)
+
+            zoom_on_shifted_image = cv2.addWeighted(
+                zoom_on_shifted_image, 1, np.zeros(zoom_on_shifted_image.shape, zoom_on_shifted_image.dtype), 0, 100
+            )
+
             cv2.imshow("MediaPipe Hands", zoom_on_shifted_image)
 
             # print("Dimensions of zoom_on_shifted_image:", zoom_on_shifted_image.shape)

@@ -222,99 +222,102 @@ def main():
 
                 zoom_on_shifted_image = zoom_image(shifted_image, current_zoom_factor)
 
-                if frame_counter % 5 == 0:
+                # if frame_counter % 1 == 0:
 
-                    resultsHand = hands.process(zoom_on_shifted_image)
+                resultsHand = hands.process(zoom_on_shifted_image)
 
-                    if resultsHand.multi_hand_landmarks:
-                        for hand_landmarks in resultsHand.multi_hand_landmarks:
-                            pointer_finger_tip_y = (
-                                hand_landmarks.landmark[
-                                    mp_hands.HandLandmark.INDEX_FINGER_TIP
-                                ].y
-                                * image_width
-                            )
-                            pointer_finger_tip_x = (
-                                hand_landmarks.landmark[
-                                    mp_hands.HandLandmark.INDEX_FINGER_TIP
-                                ].x
-                                * image_height
-                            )
+                if resultsHand.multi_hand_landmarks:
+                    for hand_landmarks in resultsHand.multi_hand_landmarks:
+                        pointer_finger_tip_y = (
+                            hand_landmarks.landmark[
+                                mp_hands.HandLandmark.INDEX_FINGER_TIP
+                            ].y
+                            * image_width
+                        )
+                        pointer_finger_tip_x = (
+                            hand_landmarks.landmark[
+                                mp_hands.HandLandmark.INDEX_FINGER_TIP
+                            ].x
+                            * image_height
+                        )
 
-                            # mp_draw.draw_landmarks(
-                            #     shifted_image, hand_landmarks, mp_hands.HAND_CONNECTIONS,
-                            #     mp_draw.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
-                            #     mp_draw.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2),
+                        # mp_draw.draw_landmarks(
+                        #     shifted_image, hand_landmarks, mp_hands.HAND_CONNECTIONS,
+                        #     mp_draw.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
+                        #     mp_draw.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2),
+                        # )
+
+                        # Draw a circle over the pointer finger
+                        pointer_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
+                        x = int(pointer_finger_tip.x * image_width)
+                        y = int(pointer_finger_tip.y * image_height)
+                        pointer_x = x
+                        pointer_y = y
+                        
+
+                        # if check_index_fingers_crossed(
+                        #     mp_hands, resultsHand.multi_hand_landmarks
+                        # ):
+                        #     camera_on = False  # "Turn off" the camera
+
+                        # # Check for thumbs-up (zoom in)
+                        # elif check_thumb_position(
+                        #     mp_hands,
+                        #     hand_landmarks,
+                        #     lambda thumb, others: thumb < others,
+                        # ):
+                        #     current_zoom_factor *= 1.05  # Increase zoom by 1%
+                        #     zoom_changed = True
+
+                        # # Check for thumbs-down (zoom out)
+                        # elif check_thumb_position(
+                        #     mp_hands,
+                        #     hand_landmarks,
+                        #     lambda thumb, others: thumb > others,
+                        # ):
+                        #     current_zoom_factor /= 1.05  # Decrease zoom by 1%
+                        #     zoom_changed = True
+
+                        # if check_pointer_finger_position(mp_hands, hand_landmarks):
+                        #     print("Pointer finger is in the top fourth of the screen")
+
+                        if pointer_finger_tip_y < image_width / 6:
+                            # print(
+                            #     "Pointer finger is in the top sixth of the screen"
                             # )
-
-                            # Draw a circle over the pointer finger
-                            pointer_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
-                            x = int(pointer_finger_tip.x * image_width)
-                            y = int(pointer_finger_tip.y * image_height)
-                            pointer_x = x
-                            pointer_y = y
-                            
-
-                            # if check_index_fingers_crossed(
-                            #     mp_hands, resultsHand.multi_hand_landmarks
-                            # ):
-                            #     camera_on = False  # "Turn off" the camera
-
-                            # # Check for thumbs-up (zoom in)
-                            # elif check_thumb_position(
-                            #     mp_hands,
-                            #     hand_landmarks,
-                            #     lambda thumb, others: thumb < others,
-                            # ):
-                            #     current_zoom_factor *= 1.05  # Increase zoom by 1%
-                            #     zoom_changed = True
-
-                            # # Check for thumbs-down (zoom out)
-                            # elif check_thumb_position(
-                            #     mp_hands,
-                            #     hand_landmarks,
-                            #     lambda thumb, others: thumb > others,
-                            # ):
-                            #     current_zoom_factor /= 1.05  # Decrease zoom by 1%
-                            #     zoom_changed = True
-
-                            # if check_pointer_finger_position(mp_hands, hand_landmarks):
-                            #     print("Pointer finger is in the top fourth of the screen")
-
-                            if pointer_finger_tip_y < image_width / 6:
-                                print(
-                                    "Pointer finger is in the top sixth of the screen"
-                                )
-                                if pointer_finger_tip_x < image_height / 6:
-                                    print("Pointer finger is in the leftmost part of the screen")
-                                    current_zoom_factor *= 1.05
-                                    zoom_changed = True
-                                elif pointer_finger_tip_x < 2 * image_height / 6:
-                                    print("Pointer finger is in the second part of the screen")
-                                    current_zoom_factor /= 1.05
-                                    zoom_changed = True
-                                elif pointer_finger_tip_x < 3 * image_height / 6:
+                            if pointer_finger_tip_x < image_height / 6:
+                                # print("Pointer finger is in the leftmost part of the screen")
+                                current_zoom_factor *= 1.01
+                                zoom_changed = True
+                            elif pointer_finger_tip_x < 2 * image_height / 6:
+                                # print("Pointer finger is in the second part of the screen")
+                                current_zoom_factor /= 1.01
+                                zoom_changed = True
+                            elif pointer_finger_tip_x < 3 * image_height / 6:
+                                if frame_counter % 10 ==0:
                                     blur_on = not blur_on
-                                    print("Pointer finger is in the third part of the screen")
-                                    
-                                elif pointer_finger_tip_x < 4 * image_height / 6:
-                                    camera_on = False
-                                    print("Pointer finger is in the fourth part of the screen")
-                                    
-                                elif pointer_finger_tip_x < 5 * image_height / 6:
-                                    if(brightness < 100):
-                                        brightness += 20
-                                    print("Pointer finger is in the fifth part of the screen")
-                                    
-                                else:
-                                    if(brightness >-60):
-                                        brightness -= 20
-                                    print("Pointer finger is in the rightmost part of the screen")
-                                    
+                                    frame_counter = 0
 
-                    frame_counter = 0
+                                # print("Pointer finger is in the third part of the screen")
+                                
+                            elif pointer_finger_tip_x < 4 * image_height / 6:
+                                camera_on = False
+                                # print("Pointer finger is in the fourth part of the screen")
+                                
+                            elif pointer_finger_tip_x < 5 * image_height / 6:
+                                if(brightness < 100):
+                                    brightness += 2
+                                # print("Pointer finger is in the fifth part of the screen")
+                                
+                            else:
+                                if(brightness >-60):
+                                    brightness -= 2
+                                # print("Pointer finger is in the rightmost part of the screen")
+                        frame_counter += 1
 
-                frame_counter += 1
+                    # frame_counter = 0
+
+                # frame_counter += 1
                 # Apply the current zoom factor, if changed
                 if zoom_changed:
                     current_zoom_factor = max(
